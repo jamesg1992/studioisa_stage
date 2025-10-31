@@ -24,9 +24,33 @@ from docx.enum.section import WD_SECTION_START
 # =============== CONFIG =================
 st.set_page_config(page_title="Studio ISA e Registro IVA", layout="wide")
 
+# =============== LOGIN SYSTEM =================
+def login():
+    users = load_users()
+
+    if "logged_user" in st.session_state:
+        return st.session_state.logged_user  # già loggato
+
+    st.title("🔐 Accesso")
+    username = st.text_input("Username")
+    password = st.text_input("Password", type="password")
+
+    if st.button("Accedi"):
+        if username in users and users[username]["password"] == password:
+            st.session_state.logged_user = username
+            st.success(f"Benvenuto {username} 👋")
+            st.rerun()
+        else:
+            st.error("❌ Credenziali errate")
+
+    st.stop()  # blocca l’app finché non fa login
+
+logged_user = login()
+
 GITHUB_FILE_A = "dizionario_drveto_stage.json"
 GITHUB_FILE_B = "dizionario_vetsgo_stage.json"
 CONFIG_FILE = "config_clinica_stage.json"
+USERS_FILE = "users.json"
 GITHUB_REPO = os.getenv("GITHUB_REPO")
 GITHUB_TOKEN = os.getenv("GITHUB_TOKEN")
 
@@ -76,6 +100,13 @@ def load_excel(file):
 
 
 # =============== GITHUB =================
+def load_users():
+    data = github_load_json(USERS_FILE)
+    return data if isinstance(data, dict) else {}
+
+def save_users(users: dict):
+    github_save_json(USERS_FILE, users)
+
 def github_load_json(file_name):
     try:
         url = f"https://api.github.com/repos/{GITHUB_REPO}/contents/{file_name}"
@@ -225,6 +256,10 @@ def main():
     if page == "Registro IVA":
         render_registro_iva()
         st.stop()
+        
+    if st.sidebar.button("🔓 Logout"):
+        st.session_state.pop("logged_user", None)
+        st.rerun()
     global model, vectorizer, model_B, vectorizer_B
 
     st.title("📊 Studio ISA – DrVeto e VetsGo")
@@ -927,6 +962,7 @@ def render_registro_iva():
 
 if __name__ == "__main__":
     main()
+
 
 
 
