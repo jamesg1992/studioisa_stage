@@ -280,87 +280,92 @@ def render_user_management():
 
     users = load_users()
 
-    #Ricerca utenti
-    search = st.text_input("🔍 Cerca utente per nome", "").strip().lower()
-    if search:
-        users = {u: data for u, data in users.items() if search in u.lower()}
+    # --- Ricerca utenti ---
+    search = st.text_input("🔍 Cerca utente", placeholder="Inserisci nome utente...").strip().lower()
+    filtered = {u: d for u, d in users.items() if search in u.lower()}
 
-    #Nessun risultato
-    if not users:
-        st.warning("Nessun utente trovato!")
+    # --- Tabella utenti ---
+    st.subheader(f"Utenti trovati: {len(filtered)}")
+
+    if not filtered:
+        st.info("Nessun utente trovato.")
         return
 
-    st.subheader("Utenti Registrati")
+    df_users = pd.DataFrame([
+        {
+            "Username": u,
+            "Ruolo": d.get("role", "user"),
+            "Gestione AI": "✅" if d.get("permissions", {}).get("manage_ai", False) else "❌",
+            "Gestione Cliniche": "✅" if d.get("permissions", {}).get("manage_clinics", False) else "❌",
+            "Gestione Utenti": "✅" if d.get("permissions", {}).get("manage_users", False) else "❌",
+        }
+        for u, d in filtered.items()
+    ])
 
-    for username, u in users.items():
+    st.dataframe(df_users, use_container_width=True)
 
-        last_login = u.get("last_login")
-        if last_login:
-            dt = datetime.fromisoformat(last_login)
-            diff = (datetime.now() - dt).total_seconds() / 60  # minuti
-            if diff < 5:
-                status = "🟢 Online"
-            elif diff < 1440:
-                status = "🟡 Attivo oggi"
-            else:
-                status = "⚪ Offline"
-        else:
-            status = "⚪ Mai connesso"
-                
+    st.markdown("---")
+    st.subheader("✏️ Modifica Utente")
 
-        with st.container():
-            st.markdown(f"### {username}  ({u.get('role','user')}) — {status}")
+    selected = st.selectbox("Seleziona utente", list(filtered.keys()))
+    u = users[selected]
 
-            col1, col2, col3 = st.columns([2, 2, 1])
+    col1, col2 = st.columns(2)
 
-            with col1:
-                # Cambia ruolo
-                new_role = st.selectbox(
-                    "Ruolo",
-                    ["user", "admin"],
-                    index=["user","admin"].index(u.get("role","user")),
-                    key=f"role_{username}"
-                )
+    with col1:
+        role_new = st.selectbox("Ruolo", ["user", "admin"], index=["user", "admin"].index(u.get("role", "user")))
 
-            with col2:
-                # Reset password utente
-                new_pwd = st.text_input(f"Nuova password per {username}", type="password", key=f"pwd_{username}")
-                if st.button("🔑 Reset Password", key=f"reset_{username}"):
-                    if new_pwd.strip():
-                        users[username]["password"] = hash_pwd(new_pwd)
-                        save_users(users)
-                        st.success(f"✅ Password aggiornata per {username}")
-                        st.rerun()
-                    else:
-                        st.warning("⚠️ Inserisci una password valida")
+        p1 = st.checkbox("Può modificare sensibilità AI", value=u.get("permissions", {}).get("manage_ai", False))
+        p2 = st.checkbox("Può gestire Cliniche", value=u.get("permissions", {}).get("manage_clinics", False))
+        p3 = st.checkbox("Può gestire Utenti", value=u.get("permissions", {}).get("manage_users", False))
 
-            with col3:
-                # Elimina utente (no admin, no se stesso)
-                if username not in ("admin", logged_user):
-                    if st.button("🗑️ Elimina", key=f"delete_{username}"):
-                        users.pop(username, None)
-                        save_users(users)
-                        st.success(f"✅ Utente {username} eliminato")
-                        st.rerun()
+        if st.button("💾 Salva modifiche"):
+            users[selected]["role"] = role_new
+            users[selected]["permissions"] = {
+                "manage_ai": p1,
+                "manage_clinics": p2,
+                "manage_users": p3,
+            }
+            save_users(users)
+            st.success("✅ Modifiche salvate.")
+            st.rerun()
 
-            # --- PERMESSI ---
-            st.markdown("#### Permessi")
-            perms = u.get("permissions", {})
-
-            p1 = st.checkbox("Può modificare sensibilità AI", value=perms.get("manage_ai", False), key=f"p_ai_{username}")
-            p2 = st.checkbox("Può gestire Cliniche", value=perms.get("manage_clinics", False), key=f"p_clinic_{username}")
-            p3 = st.checkbox("Può gestire utenti", value=perms.get("manage_users", False), key=f"p_users_{username}")
-
-            if st.button("💾 Salva permessi", key=f"save_perm_{username}"):
-                users[username].setdefault("permissions", {})
-                users[username]["permissions"]["manage_ai"] = p1
-                users[username]["permissions"]["manage_clinics"] = p2
-                users[username]["permissions"]["manage_users"] = p3
+    with col2:
+        new_pwd = st.text_input("Nuova password", type="password", placeholder="Lascia vuoto per non cambiare")
+        if st.button("🔑 Reset Password"):
+            if new_pwd.strip():
+                users[selected]["password"] = hash_pwd(new_pwd)
                 save_users(users)
-                st.success(f"✅ Permessi aggiornati per {username}")
+                st.success("✅ Password aggiornata.")
+                st.rerun()
+            else:
+                st.warning("⚠️ Inserisci una password valida.")
+
+        if selected not in ("admin", logged_user):
+            if st.button("🗑️ Elimina Utente"):
+                users.pop(selected)
+                save_users(users)
+                st.success("✅ Utente eliminato.")
                 st.rerun()
 
-            st.markdown("---")
+    st.markdown("---")
+    st.subheader("➕ Crea Nuovo Utente")
+    new_user = st.text_input("Username nuovo utente")
+    new_pwd2 = st.text_input("Password", type="password")
+    role_new2 = st.selectbox("Ruolo nuovo", ["user", "admin"])
+
+    if st.button("✅ Crea Utente"):
+        if new_user.strip() and new_pwd2.strip():
+            users[new_user] = {
+                "password": hash_pwd(new_pwd2),
+                "role": role_new2,
+                "permissions": {"manage_ai": False, "manage_clinics": False, "manage_users": False}
+            }
+            save_users(users)
+            st.success(f"✅ Utente {new_user} creato.")
+            st.rerun()
+        else:
+            st.warning("⚠️ Compila tutti i campi.")
 
     # ───── Crea nuovo utente ─────
     st.subheader("➕ Crea Nuovo Utente")
@@ -1133,6 +1138,7 @@ if __name__ == "__main__":
         render_user_management()
     else:
         main()
+
 
 
 
