@@ -24,29 +24,6 @@ from docx.enum.section import WD_SECTION_START
 # =============== CONFIG =================
 st.set_page_config(page_title="Studio ISA e Registro IVA", layout="wide")
 
-# =============== LOGIN SYSTEM =================
-def login():
-    users = load_users()
-
-    if "logged_user" in st.session_state:
-        return st.session_state.logged_user  # già loggato
-
-    st.title("🔐 Accesso")
-    username = st.text_input("Username")
-    password = st.text_input("Password", type="password")
-
-    if st.button("Accedi"):
-        if username in users and users[username]["password"] == password:
-            st.session_state.logged_user = username
-            st.success(f"Benvenuto {username} 👋")
-            st.rerun()
-        else:
-            st.error("❌ Credenziali errate")
-
-    st.stop()  # blocca l’app finché non fa login
-
-logged_user = login()
-
 GITHUB_FILE_A = "dizionario_drveto_stage.json"
 GITHUB_FILE_B = "dizionario_vetsgo_stage.json"
 CONFIG_FILE = "config_clinica_stage.json"
@@ -135,7 +112,30 @@ def github_save_json(file_name, data):
     r = requests.put(url, headers=headers, data=json.dumps(payload))
     if r.status_code not in (200, 201):
         st.error(f"❌ Errore salvataggio GitHub: {r.status_code} → {r.text}")
-        
+
+# =============== LOGIN SYSTEM =================
+def login():
+    users = load_users()
+
+    if "logged_user" in st.session_state:
+        return st.session_state.logged_user  # già loggato
+
+    st.title("🔐 Accesso")
+    username = st.text_input("Username")
+    password = st.text_input("Password", type="password")
+
+    if st.button("Accedi"):
+        if username in users and users[username]["password"] == password:
+            st.session_state.logged_user = username
+            st.success(f"Benvenuto {username} 👋")
+            st.rerun()
+        else:
+            st.error("❌ Credenziali errate")
+
+    st.stop()  # blocca l’app finché non fa login
+
+logged_user = login()
+
 def load_clinic_config():
     try:
         url = f"https://api.github.com/repos/{GITHUB_REPO}/contents/{CONFIG_FILE}"
@@ -962,6 +962,7 @@ def render_registro_iva():
 
 if __name__ == "__main__":
     main()
+
 
 
 
