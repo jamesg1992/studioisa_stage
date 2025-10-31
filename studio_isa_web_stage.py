@@ -376,9 +376,6 @@ st.sidebar.caption("Alcyon Italia SpA - 2025")
 
 # =============== MAIN =================
 def main():
-    if page == "Registro IVA":
-        render_registro_iva()
-        return
     if page == "👤 Gestione Utenti":
         render_user_management()
         st.stop()
@@ -1095,6 +1092,7 @@ def render_registro_iva():
 
 if __name__ == "__main__":
     main()
+
 
 
 
