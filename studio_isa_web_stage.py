@@ -269,60 +269,80 @@ def render_user_management():
     users = load_users()
 
     st.subheader("Utenti Registrati")
-    for user, u in users.items():
-        col1, col2, col3 = st.columns([3, 3, 1])
-        with col1:
-            st.write(f"**{user}** ({u.get('role','user')})")
 
-        with col2:
-            role = st.selectbox(
-                "Ruolo",
-                ["user", "admin"],
-                index=["user","admin"].index(u.get("role","user")),
-                key=f"role_{user}"
-            )
+    for username, u in users.items():
 
-        with col3:
-            if user != "admin" and user != logged_user:
-                if st.button("🗑️", key=f"del_{user}"):
-                    st.session_state.confirm_delete = user
-                    st.rerun()
+        with st.container():
+            st.markdown(f"### {username}  ({u.get('role','user')})")
 
-        # Salva modifiche ruolo
-        if role != u.get("role"):
-            users[user]["role"] = role
-            save_users(users)
-            st.success(f"✅ Ruolo aggiornato per {user}")
-            st.rerun()
+            col1, col2, col3 = st.columns([2, 2, 1])
 
-    # Conferma eliminazione
-    if st.session_state.get("confirm_delete"):
-        user_to_delete = st.session_state.confirm_delete
-        st.error(f"Eliminare definitivamente **{user_to_delete}**?")
-        if st.button("❌ Annulla"):
-            st.session_state.pop("confirm_delete")
-            st.rerun()
-        if st.button("✅ Conferma Eliminazione"):
-            users.pop(user_to_delete, None)
-            save_users(users)
-            st.session_state.pop("confirm_delete")
-            st.success(f"✅ Utente {user_to_delete} eliminato.")
-            st.rerun()
+            with col1:
+                # Cambia ruolo
+                new_role = st.selectbox(
+                    "Ruolo",
+                    ["user", "admin"],
+                    index=["user","admin"].index(u.get("role","user")),
+                    key=f"role_{username}"
+                )
 
-    st.markdown("---")
+            with col2:
+                # Reset password utente
+                new_pwd = st.text_input(f"Nuova password per {username}", type="password", key=f"pwd_{username}")
+                if st.button("🔑 Reset Password", key=f"reset_{username}"):
+                    if new_pwd.strip():
+                        users[username]["password"] = hash_pwd(new_pwd)
+                        save_users(users)
+                        st.success(f"✅ Password aggiornata per {username}")
+                        st.rerun()
+                    else:
+                        st.warning("⚠️ Inserisci una password valida")
+
+            with col3:
+                # Elimina utente (no admin, no se stesso)
+                if username not in ("admin", logged_user):
+                    if st.button("🗑️ Elimina", key=f"delete_{username}"):
+                        users.pop(username, None)
+                        save_users(users)
+                        st.success(f"✅ Utente {username} eliminato")
+                        st.rerun()
+
+            # --- PERMESSI ---
+            st.markdown("#### Permessi")
+            perms = u.get("permissions", {})
+
+            p1 = st.checkbox("Può modificare sensibilità AI", value=perms.get("manage_ai", False), key=f"p_ai_{username}")
+            p2 = st.checkbox("Può gestire Cliniche", value=perms.get("manage_clinics", False), key=f"p_clinic_{username}")
+            p3 = st.checkbox("Può gestire utenti", value=perms.get("manage_users", False), key=f"p_users_{username}")
+
+            if st.button("💾 Salva permessi", key=f"save_perm_{username}"):
+                users[username].setdefault("permissions", {})
+                users[username]["permissions"]["manage_ai"] = p1
+                users[username]["permissions"]["manage_clinics"] = p2
+                users[username]["permissions"]["manage_users"] = p3
+                save_users(users)
+                st.success(f"✅ Permessi aggiornati per {username}")
+                st.rerun()
+
+            st.markdown("---")
+
+    # ───── Crea nuovo utente ─────
     st.subheader("➕ Crea Nuovo Utente")
-    new_user = st.text_input("Username")
+    new_user = st.text_input("Username nuovo utente")
     new_pwd  = st.text_input("Password", type="password")
-
-    if st.button("Crea Utente"):
-        users[new_user] = {
-            "password": hash_pwd(new_pwd),
-            "role": "user",
-            "permissions": {}
-        }
-        save_users(users)
-        st.success(f"✅ Utente {new_user} creato.")
-        st.rerun()
+    role_new = st.selectbox("Ruolo", ["user", "admin"])
+    if st.button("✅ Crea Utente"):
+        if new_user.strip() and new_pwd.strip():
+            users[new_user] = {
+                "password": hash_pwd(new_pwd),
+                "role": role_new,
+                "permissions": {}
+            }
+            save_users(users)
+            st.success(f"✅ Utente {new_user} creato")
+            st.rerun()
+        else:
+            st.warning("⚠️ Compila tutti i campi")
 
 
 # =============== SIDEBAR =================
@@ -1076,6 +1096,7 @@ def render_registro_iva():
 
 if __name__ == "__main__":
     main()
+
 
 
 
