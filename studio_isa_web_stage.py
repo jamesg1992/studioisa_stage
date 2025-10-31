@@ -8,6 +8,7 @@ from openpyxl import Workbook
 from openpyxl.utils.dataframe import dataframe_to_rows
 from openpyxl.drawing.image import Image as XLImage
 import matplotlib.pyplot as plt
+import hashlib
 
 # AI
 from sklearn.feature_extraction.text import TfidfVectorizer
@@ -84,6 +85,9 @@ def load_users():
 def save_users(users: dict):
     github_save_json(USERS_FILE, users)
 
+def hash_pwd(pwd: str) -> str:
+    return hashlib.sha256(pwd.encode()).hexdigest()
+
 def github_load_json(file_name):
     try:
         url = f"https://api.github.com/repos/{GITHUB_REPO}/contents/{file_name}"
@@ -125,7 +129,7 @@ def login():
     password = st.text_input("Password", type="password")
 
     if st.button("Accedi"):
-        if username in users and users[username]["password"] == password:
+        if username in users and users[username]["password"] == hash_pwd(password):
             st.session_state.logged_user = username
             st.success(f"Benvenuto {username} 👋")
             st.rerun()
@@ -256,7 +260,21 @@ def main():
     if page == "Registro IVA":
         render_registro_iva()
         st.stop()
-        
+
+    if logged_user and load_users().get(logged_user, {}).get("role") == "admin":
+        with st.sidebar.expander("👤 Gestione utenti"):
+            users = load_users()
+            st.write("Utenti attuali:", list(users.keys()))
+
+            new_user = st.text_input("Nuovo username")
+            new_pwd = st.text_input("Nuova password", type="password")
+            new_role = st.selectbox("Ruolo", ["user", "admin"])
+            if st.button("➕ Crea Utente"):
+                users[new_user] = {"password": hash_pwd(new_pwd), "role": new_role}
+                save_users(users)
+                st.success(f"✅ Utente {new_user} creato")
+                st.rerun()
+    
     if st.sidebar.button("🔓 Logout"):
         st.session_state.pop("logged_user", None)
         st.rerun()
@@ -962,6 +980,7 @@ def render_registro_iva():
 
 if __name__ == "__main__":
     main()
+
 
 
 
