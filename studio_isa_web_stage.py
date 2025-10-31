@@ -667,6 +667,9 @@ def add_field_run(paragraph, field):
     r._r.append(fldChar2)
     
 def render_registro_iva():
+    if st.sidebar.button("🔓 Logout"):
+        st.session_state.pop("logged_user", None)
+        st.rerun()
     user = load_users().get(logged_user, {})
     if not user.get("permissions", {}).get("manage_clinics", False):
         st.info("🔒 Non hai permesso per modificare l’anagrafica cliniche.")
@@ -1074,6 +1077,7 @@ def render_registro_iva():
 
 if __name__ == "__main__":
     main()
+
 
 
 
