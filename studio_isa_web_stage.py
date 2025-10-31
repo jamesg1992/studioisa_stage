@@ -127,6 +127,20 @@ def login():
     st.title("🔐 Accesso")
     username = st.text_input("Username")
     password = st.text_input("Password", type="password")
+
+    if st.button("🔑 Reset password admin"):
+        st.session_state.reset_admin = True
+        st.rerun()
+
+    if st.session_state.get("reset_admin"):
+        new_admin_pass = st.text_input("Nuova password admin", type="password")
+        if st.button("✅ Salva nuova password"):
+            users = load_users()
+            users["admin"]["password"] = hash_pwd(new_admin_pass)
+            save_users(users)
+            st.session_state.pop("reset_admin")
+            st.success("Password admin aggiornata ✅")
+            st.rerun() 
     
     if st.button("Accedi"):
         if username in users and users[username]["password"] == hash_pwd(password):
@@ -262,18 +276,44 @@ def main():
         st.stop()
 
     if logged_user and load_users().get(logged_user, {}).get("role") == "admin":
-        with st.sidebar.expander("👤 Gestione utenti"):
-            users = load_users()
-            st.write("Utenti attuali:", list(users.keys()))
+    with st.sidebar.expander("👤 Gestione utenti"):
+        users = load_users()
+        st.write("Utenti attuali:", list(users.keys()))
 
-            new_user = st.text_input("Nuovo username")
-            new_pwd = st.text_input("Nuova password", type="password")
-            new_role = st.selectbox("Ruolo", ["user", "admin"])
-            if st.button("➕ Crea Utente"):
-                users[new_user] = {"password": hash_pwd(new_pwd), "role": new_role}
-                save_users(users)
-                st.success(f"✅ Utente {new_user} creato")
-                st.rerun()
+        new_user = st.text_input("Nuovo username")
+        new_pwd = st.text_input("Nuova password", type="password")
+        new_role = st.selectbox("Ruolo", ["user", "admin"])
+
+        perm_ai = st.checkbox("Può modificare sensibilità AI?", value=(new_role=="admin"))
+        perm_clinic = st.checkbox("Può gestire Cliniche?", value=(new_role=="admin"))
+
+        if st.button("➕ Crea Utente"):
+            users[new_user] = {
+                "password": hash_pwd(new_pwd),
+                "role": new_role,
+                "permissions": {
+                    "manage_ai": perm_ai,
+                    "manage_clinics": perm_clinic
+                }
+            }
+            save_users(users)
+            st.success(f"✅ Utente {new_user} creato")
+            st.rerun()
+
+    st.subheader("Modifica permessi utente")
+    sel_user = st.selectbox("Seleziona utente", [u for u in users.keys() if u != "admin"])
+
+    if sel_user:
+        u = users[sel_user]
+        perm_ai = st.checkbox("Può modificare AI?", value=u["permissions"].get("manage_ai", False))
+        perm_clinic = st.checkbox("Può gestire Cliniche?", value=u["permissions"].get("manage_clinics", False))
+
+        if st.button("💾 Salva permessi"):
+            users[sel_user]["permissions"]["manage_ai"] = perm_ai
+            users[sel_user]["permissions"]["manage_clinics"] = perm_clinic
+            save_users(users)
+            st.success("Permessi aggiornati ✅")
+            st.rerun()
     
     if st.sidebar.button("🔓 Logout"):
         st.session_state.pop("logged_user", None)
@@ -980,6 +1020,7 @@ def render_registro_iva():
 
 if __name__ == "__main__":
     main()
+
 
 
 
