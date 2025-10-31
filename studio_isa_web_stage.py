@@ -80,7 +80,14 @@ def load_excel(file):
 # =============== GITHUB =================
 def load_users():
     data = github_load_json(USERS_FILE)
-    return data if isinstance(data, dict) else {}
+    for k, v in data.items():
+        if "permissions" not in v:
+            v["permissions"] = {
+                "manage_ai": False,
+                "manage_clinics": False,
+                "manage_users": False,
+            }
+    return data
 
 def save_users(users: dict):
     github_save_json(USERS_FILE, users)
@@ -1067,6 +1074,7 @@ def render_registro_iva():
 
 if __name__ == "__main__":
     main()
+
 
 
 
