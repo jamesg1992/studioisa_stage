@@ -318,14 +318,14 @@ def main():
 
                 # --- Reset password utente ---
                 new_pass = st.text_input(f"Nuova password per {user}", type="password", key=f"newpass_{user}")
-                    if st.button(f"🔄 Reset password {user}", key=f"resetpass_{user}"):
-                        if new_pass.strip():
-                            users[user]["password"] = hash_pwd(new_pass)
-                            save_users(users)
-                            st.success(f"✅ Password aggiornata per {user}")
-                            st.rerun()
-                        else:
-                            st.warning("⚠️ Inserisci una password valida")
+                if st.button(f"🔄 Reset password {user}", key=f"resetpass_{user}"):
+                    if new_pass.strip():
+                        users[user]["password"] = hash_pwd(new_pass)
+                        save_users(users)
+                        st.success(f"✅ Password aggiornata per {user}")
+                        st.rerun()
+                    else:
+                        st.warning("⚠️ Inserisci una password valida")
 
                 # Salva modifiche permessi
                 if st.button(f"💾 Salva permessi per {user}", key=f"save_{user}"):
@@ -1074,6 +1074,7 @@ def render_registro_iva():
 
 if __name__ == "__main__":
     main()
+
 
 
 
