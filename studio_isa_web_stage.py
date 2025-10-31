@@ -12,7 +12,8 @@ import hashlib
 
 # AI
 from sklearn.feature_extraction.text import TfidfVectorizer
-from sklearn.naive_bayes import MultinomialNB
+from sklearn.svm import LinearSVC
+from sklearn.calibration import CalibratedClassifierCV
 from docx import Document
 from docx.shared import Inches, Pt
 from docx.enum.text import WD_ALIGN_PARAGRAPH
@@ -215,19 +216,25 @@ def train_ai_model(dictionary):
     dictionary = {k: v for k, v in dictionary.items() if k.strip() != ""}
     if not dictionary:
         return None, None
+
     texts = list(dictionary.keys())
     labels = list(dictionary.values())
-    vec = TfidfVectorizer(lowercase=True)
+
+    vec = TfidfVectorizer(lowercase=True, ngram_range=(1,2), min_df=1)
     try:
         X = vec.fit_transform(texts)
     except ValueError:
         return None, None
+
     if len(set(labels)) <= 1:
         return None, None
-    m = MultinomialNB()
-    m.fit(X, labels)
-    return vec, m
 
+    # SVM molto più precisa
+    base_model = LinearSVC()
+    model = CalibratedClassifierCV(base_model)  # aggiunge predict_proba() per auto-apprendimento
+    model.fit(X, labels)
+
+    return vec, model
 
 # =============== CLASSIFICATION (helpers) =================
 def classify_A(desc, fam, mem):
@@ -1126,6 +1133,7 @@ if __name__ == "__main__":
         render_user_management()
     else:
         main()
+
 
 
 
