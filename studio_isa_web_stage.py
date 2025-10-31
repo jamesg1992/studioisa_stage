@@ -316,6 +316,11 @@ def main():
                     key=f"perm_users_{user}"
                 )
 
+                if user != "admin" and user != logged_user:
+                    if st.button(f"🗑️ Elimina utente {user}", key=f"del_{user}"):
+                        st.session_state.confirm_delete_user = user
+                        st.rerun()
+
                 # --- Reset password utente ---
                 new_pass = st.text_input(f"Nuova password per {user}", type="password", key=f"newpass_{user}")
                 if st.button(f"🔄 Reset password {user}", key=f"resetpass_{user}"):
@@ -327,6 +332,20 @@ def main():
                     else:
                         st.warning("⚠️ Inserisci una password valida")
 
+                if st.session_state.get("confirm_delete_user"):
+                    user_to_delete = st.session_state.confirm_delete_user
+                    st.error(f"⚠️ Sei sicuro di voler eliminare l'utente **{user_to_delete}**?")
+                    if st.button("❌ ANNULLA"):
+                        st.session_state.pop("confirm_delete_user")
+                        st.retun()
+                    if st.button("✅ CONFERMA ELIMINAZIONE"):
+                        users = load_users()
+                        users.pop(user_to_delete, None)
+                        save_users(users)
+                        st.session_state.pop("confirm_delete_user")
+                        st.success(f"✅ Utente **{user_to_delete}** eliminato definitivamente.")
+                        st.rerun()
+                
                 # Salva modifiche permessi
                 if st.button(f"💾 Salva permessi per {user}", key=f"save_{user}"):
                     users[user].setdefault("permissions", {})
@@ -350,16 +369,6 @@ def main():
                 }
                 save_users(users)
                 st.success(f"✅ Utente {new_user} creato")
-            st.markdown("---")
-            st.subheader("🔑 Reset Password Admin")
-            new_admin_pwd = st.text_input("Nuova password per admin", type="password", key="reset_admin")
-            if st.button("🔄 Reimposta Password Admin"):
-                if new_admin_pwd.strip():
-                    reset_admin_password(new_admin_pwd)
-                    st.success("✅ Password admin aggiornata con successo")
-                else:
-                    st.warning("⚠️ Inserisci una password valida")
-                st.rerun()
     
     if st.sidebar.button("🔓 Logout"):
         st.session_state.pop("logged_user", None)
@@ -1074,6 +1083,7 @@ def render_registro_iva():
 
 if __name__ == "__main__":
     main()
+
 
 
 
