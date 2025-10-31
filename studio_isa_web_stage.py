@@ -127,15 +127,6 @@ def login():
     st.title("🔐 Accesso")
     username = st.text_input("Username")
     password = st.text_input("Password", type="password")
-
-    if st.button("⚙️ Converti password admin (solo una volta)"):
-        if "admin" in users:
-            users["admin"]["password"] = hash_pwd(users["admin"]["password"])
-            save_users(users)
-            st.success("✅ Password admin convertita! Ora riprova ad accedere.")
-        else:
-            st.error("Nessun utente admin trovato.")
-        st.stop()
     
     if st.button("Accedi"):
         if username in users and users[username]["password"] == hash_pwd(password):
@@ -989,6 +980,7 @@ def render_registro_iva():
 
 if __name__ == "__main__":
     main()
+
 
 
 
