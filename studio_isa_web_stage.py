@@ -273,17 +273,23 @@ def classify_B(prest, mem):
 
 # =============== SIDEBAR =================
 page = st.sidebar.radio("📌 Navigazione", ["Studio ISA", "Registro IVA"])
-user_data = load_users().get(logged_user, {})
-can_manage_ai = user.get("permissions", {}).get("manage_ai", False)
+# --- Permessi utente ---
+users_all = load_users()
+user_data = users_all.get(logged_user, {})
+permissions = user_data.get("permissions", {})
+
+can_manage_ai = permissions.get("manage_ai", False)
+
 auto_thresh = st.sidebar.slider(
     "Soglia auto-apprendimento (AI)",
     0.50, 0.99, 0.85, 0.01,
     disabled=not can_manage_ai
 )
+
 if not can_manage_ai:
-    st.sidebar.caption("🔒 Modifica disabilitata (non hai permesso)")
+    st.sidebar.caption("🔒 Non hai il permesso di modificare la sensibilità AI")
 else:
-    st.sidebar.caption("✅ Hai il permesso di modificare la sensibilità AI")
+    st.sidebar.caption("✅ Puoi modificare la sensibilità AI")
 st.sidebar.caption("Se la confidenza del modello ≥ soglia, il termine viene appreso in automatico.")
 st.sidebar.caption("Alcyon Italia SpA - 2025")
 
@@ -1061,6 +1067,7 @@ def render_registro_iva():
 
 if __name__ == "__main__":
     main()
+
 
 
 
