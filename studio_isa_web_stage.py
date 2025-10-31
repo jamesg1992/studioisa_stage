@@ -289,8 +289,23 @@ def main():
             new_pwd = st.text_input("Nuova password", type="password")
             new_role = st.selectbox("Ruolo", ["user", "admin"])
 
-            perm_ai = st.checkbox("Può modificare sensibilità AI?", value=(new_role=="admin"))
-            perm_clinic = st.checkbox("Può gestire Cliniche?", value=(new_role=="admin"))
+            perm_clinic = st.checkbox(
+                "Può gestire Cliniche?",
+                value=u["permissions"].get("manage_clinics", False),
+                key=f"perm_clinic_{user}"
+            )
+
+            perm_ai = st.checkbox(
+                "Può modificare sensibilità AI?",
+                value=u["permissions"].get("change_ai_threshold", False),
+                key=f"perm_ai_{user}"
+            )
+
+            perm_users = st.checkbox(
+                "Può gestire utenti?",
+                value=u["permissions"].get("manage_users", False),
+                key=f"perm_users_{user}"
+            )
 
             if st.button("➕ Crea Utente"):
                 users[new_user] = {
@@ -1030,6 +1045,7 @@ def render_registro_iva():
 
 if __name__ == "__main__":
     main()
+
 
 
 
