@@ -263,6 +263,67 @@ def classify_B(prest, mem):
 
     return "Altre attività"
 
+def render_user_management():
+    st.title("👤 Gestione Utenti")
+
+    users = load_users()
+
+    st.subheader("Utenti Registrati")
+    for user, u in users.items():
+        col1, col2, col3 = st.columns([3, 3, 1])
+        with col1:
+            st.write(f"**{user}** ({u.get('role','user')})")
+
+        with col2:
+            role = st.selectbox(
+                "Ruolo",
+                ["user", "admin"],
+                index=["user","admin"].index(u.get("role","user")),
+                key=f"role_{user}"
+            )
+
+        with col3:
+            if user != "admin" and user != logged_user:
+                if st.button("🗑️", key=f"del_{user}"):
+                    st.session_state.confirm_delete = user
+                    st.rerun()
+
+        # Salva modifiche ruolo
+        if role != u.get("role"):
+            users[user]["role"] = role
+            save_users(users)
+            st.success(f"✅ Ruolo aggiornato per {user}")
+            st.rerun()
+
+    # Conferma eliminazione
+    if st.session_state.get("confirm_delete"):
+        user_to_delete = st.session_state.confirm_delete
+        st.error(f"Eliminare definitivamente **{user_to_delete}**?")
+        if st.button("❌ Annulla"):
+            st.session_state.pop("confirm_delete")
+            st.rerun()
+        if st.button("✅ Conferma Eliminazione"):
+            users.pop(user_to_delete, None)
+            save_users(users)
+            st.session_state.pop("confirm_delete")
+            st.success(f"✅ Utente {user_to_delete} eliminato.")
+            st.rerun()
+
+    st.markdown("---")
+    st.subheader("➕ Crea Nuovo Utente")
+    new_user = st.text_input("Username")
+    new_pwd  = st.text_input("Password", type="password")
+
+    if st.button("Crea Utente"):
+        users[new_user] = {
+            "password": hash_pwd(new_pwd),
+            "role": "user",
+            "permissions": {}
+        }
+        save_users(users)
+        st.success(f"✅ Utente {new_user} creato.")
+        st.rerun()
+
 
 # =============== SIDEBAR =================
 pages = ["Studio ISA", "Registro IVA"]
@@ -297,6 +358,9 @@ st.sidebar.caption("Alcyon Italia SpA - 2025")
 def main():
     if page == "Registro IVA":
         render_registro_iva()
+        st.stop()
+    if page == "👤 Gestione Utenti":
+        render_user_management()
         st.stop()
 
     if logged_user and load_users().get(logged_user, {}).get("role") == "admin":
@@ -1090,6 +1154,7 @@ def render_registro_iva():
 
 if __name__ == "__main__":
     main()
+
 
 
 
