@@ -265,7 +265,12 @@ def classify_B(prest, mem):
 
 # =============== SIDEBAR =================
 page = st.sidebar.radio("📌 Navigazione", ["Studio ISA", "Registro IVA"])
-auto_thresh = st.sidebar.slider("Soglia auto-apprendimento (AI)", 0.50, 0.99, 0.85, 0.01)
+user = load_users().get(logged_user, {})
+can_manage_ai = user.get("permissions", {}).get("manage_ai", False)
+if can_manage_ai:
+    auto_thresh = st.sidebar.slider("Soglia auto-apprendimento (AI)", 0.50, 0.99, 0.85, 0.01)
+else:
+    auto_thresh = st.sidebar.number_input("Soglia auto-apprendimento (AI)", value=0.85, disabled=True)
 st.sidebar.caption("Se la confidenza del modello ≥ soglia, il termine viene appreso in automatico.")
 st.sidebar.caption("Alcyon Italia SpA - 2025")
 
@@ -276,29 +281,29 @@ def main():
         st.stop()
 
     if logged_user and load_users().get(logged_user, {}).get("role") == "admin":
-    with st.sidebar.expander("👤 Gestione utenti"):
-        users = load_users()
-        st.write("Utenti attuali:", list(users.keys()))
+        with st.sidebar.expander("👤 Gestione utenti"):
+            users = load_users()
+            st.write("Utenti attuali:", list(users.keys()))
 
-        new_user = st.text_input("Nuovo username")
-        new_pwd = st.text_input("Nuova password", type="password")
-        new_role = st.selectbox("Ruolo", ["user", "admin"])
+            new_user = st.text_input("Nuovo username")
+            new_pwd = st.text_input("Nuova password", type="password")
+            new_role = st.selectbox("Ruolo", ["user", "admin"])
 
-        perm_ai = st.checkbox("Può modificare sensibilità AI?", value=(new_role=="admin"))
-        perm_clinic = st.checkbox("Può gestire Cliniche?", value=(new_role=="admin"))
+            perm_ai = st.checkbox("Può modificare sensibilità AI?", value=(new_role=="admin"))
+            perm_clinic = st.checkbox("Può gestire Cliniche?", value=(new_role=="admin"))
 
-        if st.button("➕ Crea Utente"):
-            users[new_user] = {
-                "password": hash_pwd(new_pwd),
-                "role": new_role,
-                "permissions": {
-                    "manage_ai": perm_ai,
-                    "manage_clinics": perm_clinic
+            if st.button("➕ Crea Utente"):
+                users[new_user] = {
+                    "password": hash_pwd(new_pwd),
+                    "role": new_role,
+                    "permissions": {
+                        "manage_ai": perm_ai,
+                        "manage_clinics": perm_clinic
+                    }
                 }
-            }
-            save_users(users)
-            st.success(f"✅ Utente {new_user} creato")
-            st.rerun()
+                save_users(users)
+                st.success(f"✅ Utente {new_user} creato")
+                st.rerun()
 
     st.subheader("Modifica permessi utente")
     sel_user = st.selectbox("Seleziona utente", [u for u in users.keys() if u != "admin"])
@@ -618,6 +623,11 @@ def add_field_run(paragraph, field):
     r._r.append(fldChar2)
     
 def render_registro_iva():
+    user = load_users().get(logged_user, {})
+    if not user.get("permissions", {}).get("manage_clinics", False):
+        st.info("🔒 Non hai permesso per modificare l’anagrafica cliniche.")
+        clinica_scelta = st.selectbox("Seleziona Clinica", list(config_all.keys()))
+        return
     st.header("📄 Registro IVA")
 
     config_all = load_clinic_config()
@@ -1020,6 +1030,7 @@ def render_registro_iva():
 
 if __name__ == "__main__":
     main()
+
 
 
 
