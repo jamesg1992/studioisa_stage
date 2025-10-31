@@ -146,6 +146,11 @@ def login():
     if st.button("Accedi"):
         if username in users and users[username]["password"] == hash_pwd(password):
             st.session_state.logged_user = username
+
+            #aggiorna stato ultimo
+            users[username]["last_login"] = datetime.now().isoformat()
+            save_users(users)
+            
             st.success(f"Benvenuto {username} 👋")
             st.rerun()
         else:
@@ -282,8 +287,22 @@ def render_user_management():
 
     for username, u in users.items():
 
+        last_login = u.get("last_login")
+        if last_login:
+            dt = datetime.fromisoformat(last_login)
+            diff = (datetime.now() - dt).total_seconds() / 60  # minuti
+            if diff < 5:
+                status = "🟢 Online"
+            elif diff < 1440:
+                status = "🟡 Attivo oggi"
+            else:
+                status = "⚪ Offline"
+        else:
+            status = "⚪ Mai connesso"
+                
+
         with st.container():
-            st.markdown(f"### {username}  ({u.get('role','user')})")
+            st.markdown(f"### {username}  ({u.get('role','user')}) — {status}")
 
             col1, col2, col3 = st.columns([2, 2, 1])
 
@@ -1107,6 +1126,7 @@ if __name__ == "__main__":
         render_user_management()
     else:
         main()
+
 
 
 
