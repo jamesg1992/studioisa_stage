@@ -321,7 +321,7 @@ def main():
                 )
                 perm_ai = st.checkbox(
                     "Può modificare sensibilità AI?",
-                    value=u.get("permissions", {}).get("change_ai_threshold", False),
+                    value=u.get("permissions", {}).get("manage_ai", False),
                     key=f"perm_ai_{user}"
                 )
                 perm_users = st.checkbox(
@@ -334,7 +334,7 @@ def main():
                 if st.button(f"💾 Salva permessi per {user}", key=f"save_{user}"):
                     users[user].setdefault("permissions", {})
                     users[user]["permissions"]["manage_clinics"] = perm_clinic
-                    users[user]["permissions"]["change_ai_threshold"] = perm_ai
+                    users[user]["permissions"]["manage_ai"] = perm_ai
                     users[user]["permissions"]["manage_users"] = perm_users
                     save_users(users)
                     st.success(f"✅ Permessi aggiornati per {user}")
@@ -1074,6 +1074,7 @@ def render_registro_iva():
 
 if __name__ == "__main__":
     main()
+
 
 
 
