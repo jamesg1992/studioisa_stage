@@ -139,7 +139,7 @@ def login():
     if "logged_user" in st.session_state:
         return st.session_state.logged_user  # già loggato
 
-    st.title("🔐 Accesso")
+    st.title("🔐 Accesso al portale")
     username = st.text_input("Username")
     password = st.text_input("Password", type="password")
 
@@ -150,7 +150,7 @@ def login():
             st.rerun()
         else:
             st.error("❌ Credenziali errate")
-
+    
     st.stop()  # blocca l’app finché non fa login
 
 logged_user = login()
@@ -267,6 +267,16 @@ def render_user_management():
     st.title("👤 Gestione Utenti")
 
     users = load_users()
+
+    #Ricerca utenti
+    search = st.text_input("🔍 Cerca utente per nome", "").strip().lower()
+    if search:
+        users = {u: data for u, data in users.items() if search in u.lower()}
+
+    #Nessun risultato
+    if not users:
+        st.warning("Nessun utente trovato!")
+        return
 
     st.subheader("Utenti Registrati")
 
@@ -1097,6 +1107,7 @@ if __name__ == "__main__":
         render_user_management()
     else:
         main()
+
 
 
 
