@@ -85,6 +85,14 @@ def load_users():
 def save_users(users: dict):
     github_save_json(USERS_FILE, users)
 
+def reset_admin_password(new_password):
+    users = load_users()
+    if "admin" not in users:
+        users["admin"] = {"password": hash_pwd(new_password), "role": "admin", "permissions": {}}
+    else:
+        users["admin"]["password"] = hash_pwd(new_password)
+    save_users(users)
+
 def hash_pwd(pwd: str) -> str:
     return hashlib.sha256(pwd.encode()).hexdigest()
 
@@ -283,7 +291,7 @@ def main():
     if logged_user and load_users().get(logged_user, {}).get("role") == "admin":
         with st.sidebar.expander("👤 Gestione utenti"):
             users = load_users()
-
+            
             st.subheader("Utenti registrati:")
             for user, u in users.items():
                 st.write(f"**{user}**  ({u.get('role','user')})")
@@ -327,6 +335,15 @@ def main():
                 }
                 save_users(users)
                 st.success(f"✅ Utente {new_user} creato")
+            st.markdown("---")
+            st.subheader("🔑 Reset Password Admin")
+            new_admin_pwd = st.text_input("Nuova password per admin", type="password", key="reset_admin")
+            if st.button("🔄 Reimposta Password Admin"):
+                if new_admin_pwd.strip():
+                    reset_admin_password(new_admin_pwd)
+                    st.success("✅ Password admin aggiornata con successo")
+                else:
+                    st.warning("⚠️ Inserisci una password valida")
                 st.rerun()
     
     if st.sidebar.button("🔓 Logout"):
@@ -1039,6 +1056,7 @@ def render_registro_iva():
 
 if __name__ == "__main__":
     main()
+
 
 
 
