@@ -143,20 +143,6 @@ def login():
     username = st.text_input("Username")
     password = st.text_input("Password", type="password")
 
-    if st.button("🔑 Reset password admin"):
-        st.session_state.reset_admin = True
-        st.rerun()
-
-    if st.session_state.get("reset_admin"):
-        new_admin_pass = st.text_input("Nuova password admin", type="password")
-        if st.button("✅ Salva nuova password"):
-            users = load_users()
-            users["admin"]["password"] = hash_pwd(new_admin_pass)
-            save_users(users)
-            st.session_state.pop("reset_admin")
-            st.success("Password admin aggiornata ✅")
-            st.rerun() 
-    
     if st.button("Accedi"):
         if username in users and users[username]["password"] == hash_pwd(password):
             st.session_state.logged_user = username
@@ -329,6 +315,17 @@ def main():
                     value=u.get("permissions", {}).get("manage_users", False),
                     key=f"perm_users_{user}"
                 )
+
+                # --- Reset password utente ---
+                new_pass = st.text_input(f"Nuova password per {user}", type="password", key=f"newpass_{user}")
+                    if st.button(f"🔄 Reset password {user}", key=f"resetpass_{user}"):
+                        if new_pass.strip():
+                            users[user]["password"] = hash_pwd(new_pass)
+                            save_users(users)
+                            st.success(f"✅ Password aggiornata per {user}")
+                            st.rerun()
+                        else:
+                            st.warning("⚠️ Inserisci una password valida")
 
                 # Salva modifiche permessi
                 if st.button(f"💾 Salva permessi per {user}", key=f"save_{user}"):
@@ -1077,6 +1074,7 @@ def render_registro_iva():
 
 if __name__ == "__main__":
     main()
+
 
 
 
