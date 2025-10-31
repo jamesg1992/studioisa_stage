@@ -265,7 +265,14 @@ def classify_B(prest, mem):
 
 
 # =============== SIDEBAR =================
-page = st.sidebar.radio("📌 Navigazione", ["Studio ISA", "Registro IVA"])
+pages = ["Studio ISA", "Registro IVA"]
+user_data = load_users().get(logged_user,{})
+permissions = user_data.get("permissions", {})
+
+if user_data.get("role") == "admin" or permissions.get("manage_users", False):
+    pages.append("👤 Gestione Utenti")
+page = st.sidebar.radio("📌 Navigazione", pages)
+
 # --- Permessi utente ---
 users_all = load_users()
 user_data = users_all.get(logged_user, {})
@@ -1083,6 +1090,7 @@ def render_registro_iva():
 
 if __name__ == "__main__":
     main()
+
 
 
 
