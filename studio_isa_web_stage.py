@@ -346,7 +346,7 @@ def render_user_management():
 
 
 # =============== SIDEBAR =================
-pages = ["Studio ISA", "Registro IVA"]
+pages = ["📊 Studio ISA", "📄 Registro IVA"]
 user_data = load_users().get(logged_user,{})
 permissions = user_data.get("permissions", {})
 
@@ -1096,6 +1096,7 @@ def render_registro_iva():
 
 if __name__ == "__main__":
     main()
+
 
 
 
