@@ -367,25 +367,6 @@ def render_user_management():
         else:
             st.warning("⚠️ Compila tutti i campi.")
 
-    # ───── Crea nuovo utente ─────
-    st.subheader("➕ Crea Nuovo Utente")
-    new_user = st.text_input("Username nuovo utente")
-    new_pwd  = st.text_input("Password", type="password")
-    role_new = st.selectbox("Ruolo", ["user", "admin"])
-    if st.button("✅ Crea Utente"):
-        if new_user.strip() and new_pwd.strip():
-            users[new_user] = {
-                "password": hash_pwd(new_pwd),
-                "role": role_new,
-                "permissions": {}
-            }
-            save_users(users)
-            st.success(f"✅ Utente {new_user} creato")
-            st.rerun()
-        else:
-            st.warning("⚠️ Compila tutti i campi")
-
-
 # =============== SIDEBAR =================
 pages = ["📊 Studio ISA", "📄 Registro IVA"]
 user_data = load_users().get(logged_user,{})
@@ -1138,6 +1119,7 @@ if __name__ == "__main__":
         render_user_management()
     else:
         main()
+
 
 
 
