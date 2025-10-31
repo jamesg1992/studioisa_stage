@@ -1091,7 +1091,13 @@ def render_registro_iva():
 
 
 if __name__ == "__main__":
-    main()
+    if page == "📄 Registro IVA":
+        render_registro_iva()
+    elif page == "👤 Gestione Utenti":
+        render_user_management()
+    else:
+        main()
+
 
 
 
