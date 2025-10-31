@@ -24,9 +24,9 @@ from docx.enum.section import WD_SECTION_START
 # =============== CONFIG =================
 st.set_page_config(page_title="Studio ISA e Registro IVA", layout="wide")
 
-GITHUB_FILE_A = "dizionario_drveto.json"
-GITHUB_FILE_B = "dizionario_vetsgo.json"
-CONFIG_FILE = "config_clinica.json"
+GITHUB_FILE_A = "dizionario_drveto_stage.json"
+GITHUB_FILE_B = "dizionario_vetsgo_stage.json"
+CONFIG_FILE = "config_clinica_stage.json"
 GITHUB_REPO = os.getenv("GITHUB_REPO")
 GITHUB_TOKEN = os.getenv("GITHUB_TOKEN")
 
@@ -927,6 +927,7 @@ def render_registro_iva():
 
 if __name__ == "__main__":
     main()
+
 
 
 
