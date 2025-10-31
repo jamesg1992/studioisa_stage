@@ -690,14 +690,13 @@ def render_registro_iva():
         st.session_state.pop("logged_user", None)
         st.rerun()
     user = load_users().get(logged_user, {})
-    if not user.get("permissions", {}).get("manage_clinics", False):
-        st.info("🔒 Non hai permesso per modificare l’anagrafica cliniche.")
-        clinica_scelta = st.selectbox("Seleziona Clinica", list(config_all.keys()))
-        return
-    st.header("📄 Registro IVA")
-
     config_all = load_clinic_config()
     cliniche = list(config_all.keys())
+    if not user.get("permissions", {}).get("manage_clinics", False):
+        st.info("🔒 Non hai permesso per modificare l’anagrafica cliniche.")
+        clinica_scelta = st.selectbox("Seleziona Clinica", cliniche)
+        return
+    st.header("📄 Registro IVA")
     
     clinica_scelta = st.selectbox("Seleziona Clinica", ["+ Nuova Clinica"] + cliniche)
 
@@ -1096,6 +1095,7 @@ def render_registro_iva():
 
 if __name__ == "__main__":
     main()
+
 
 
 
