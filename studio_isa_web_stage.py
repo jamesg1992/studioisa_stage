@@ -89,6 +89,8 @@ def load_users():
                 "manage_clinics": False,
                 "manage_users": False,
             }
+        if "clinics" not in v:
+            v["clinics"] = []
     return data
 
 def save_users(users: dict):
@@ -340,6 +342,23 @@ def render_user_management():
             }
             save_users(users)
             st.success(f"✅ Modifiche salvate per {selected}")
+            st.rerun()
+
+        st.markdown("#### Cliniche assegnate")
+
+        clinics_all = list(load_clinic_config().keys())
+        assigned = u.get("clinics", [])
+
+        selected_clinics = st.multiselect(
+            "Cliniche utilizzabili da questo utente:",
+            clinics_all,
+            default=assigned,
+            key=f"clinics_{selected}"
+        )
+        if st.button("💾 Salva Cliniche", key=f"save_clinics_{selected}"):
+            users[selected]["clinics"] = selected_clinics
+            save_users(users)
+            st.success("✅ Cliniche aggiornate")
             st.rerun()
 
     with col2:
@@ -728,11 +747,24 @@ def render_registro_iva():
         st.error("⛔ Non hai permesso di usare il Registro IVA.")
         st.stop()
     config_all = load_clinic_config()
-    cliniche = list(config_all.keys())
+    # --- Determina elenco cliniche disponibili per questo utente ---
+    if user.get("role") == "admin":
+        # Admin vede tutte
+        cliniche = list(config_all.keys())
+        can_edit_clinic = True
+    else:
+        cliniche = user.get("clinics", [])
+        can_edit_clinic = permissions.get("manage_clinics", False)
+
+        if not cliniche:
+            st.warning("⚠️ Nessuna clinica assegnata a questo utente. Contatta un amministratore.")
+            st.stop()
 
     st.header("📄 Registro IVA")
-    
-    clinica_scelta = st.selectbox("Seleziona Clinica", ["+ Nuova Clinica"] + cliniche)
+
+    # Se può gestire cliniche → mostra "+ Nuova Clinica"
+    scelte = (["+ Nuova Clinica"] if can_edit_clinic else []) + cliniche
+    clinica_scelta = st.selectbox("Seleziona Clinica", scelte)
 
     # ➕ Aggiunta nuova clinica
     if clinica_scelta == "+ Nuova Clinica":
@@ -1140,6 +1172,7 @@ if __name__ == "__main__":
         render_user_management()
     else:
         main()
+
 
 
 
