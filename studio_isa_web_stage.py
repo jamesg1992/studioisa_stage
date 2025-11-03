@@ -408,6 +408,16 @@ def main():
     global model, vectorizer, model_B, vectorizer_B
 
     st.title("📊 Studio ISA – DrVeto e VetsGo")
+
+    config_all = load_clinic_config()
+    cliniche = list(config_all.keys())
+
+    if not cliniche:
+        st.error("⚠️ Nessuna clinica configurata. Vai in Registro IVA → aggiungi clinica.")
+        st.stop()
+
+    clinica_scelta = st.selectbox("Seleziona Clinica", cliniche)
+    
     file = st.file_uploader("Seleziona Excel", type=["xlsx","xls"])
     if not file:
         st.stop()
@@ -424,6 +434,7 @@ def main():
         st.session_state.auto_added = []  # [(term, cat, conf)]
 
     df = st.session_state.df.copy()
+    df["Clinica"] = clinica_scelta
     mem = st.session_state.mem
     new = st.session_state.new
     mode = st.session_state.mode
@@ -620,6 +631,17 @@ def main():
     out = BytesIO(); wb.save(out)
 
     st.download_button("⬇️ Scarica Excel", data=out.getvalue(), file_name="StudioISA.xlsx")
+
+    if st.checkbox("📍 Confronta questa clinica con tutte le altre"):
+        if "report_storico" not in st.session_state:
+            st.session_state.report_storico = pd.DataFrame()
+        st.session_state.report_storico = pd.concat([st.session_state.report_storico, studio.assign(Clinica=clinica_scelta)])
+        st.subheader("Confronto tra Cliniche")
+        confronto = st.session_state.report_storico.pivot_table(
+            index="Categoria", columns="Clinica", values=ycol, aggfunc="sum"
+        ).fillna(0)
+        st.dataframe(confronto, use_container_width=True)
+        st.bar_chart(confronto.T)
 
     # ===== DASHBOARD =====
     if page == "Dashboard Annuale":
@@ -1119,6 +1141,7 @@ if __name__ == "__main__":
         render_user_management()
     else:
         main()
+
 
 
 
