@@ -297,7 +297,8 @@ def render_user_management():
             "Username": u,
             "Ruolo": d.get("role", "user"),
             "Gestione AI": "✅" if d.get("permissions", {}).get("manage_ai", False) else "❌",
-            "Gestione Cliniche": "✅" if d.get("permissions", {}).get("manage_clinics", False) else "❌",
+            "Gestione Cliniche (aggiungi/rimuovi)": "✅" if d.get("permissions", {}).get("manage_clinics", False) else "❌",
+            "Può usare Registro IVA": "✅" if d.get("permissions", {}).get("use_registro_iva", False) else "❌",
             "Gestione Utenti": "✅" if d.get("permissions", {}).get("manage_users", False) else "❌",
         }
         for u, d in filtered.items()
@@ -1139,6 +1140,7 @@ if __name__ == "__main__":
         render_user_management()
     else:
         main()
+
 
 
 
