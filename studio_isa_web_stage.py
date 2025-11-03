@@ -776,7 +776,7 @@ def render_registro_iva():
 
     # ➕ Aggiunta nuova clinica
     if clinica_scelta == "+ Nuova Clinica":
-        if not can_edit_clinic:
+        if not can_edit_this_clinic:
             st.warning("🔒 Non hai permesso di aggiungere cliniche.")
             st.stop
         struttura = st.text_input("Nome Struttura (Nuova)")
@@ -1183,6 +1183,7 @@ if __name__ == "__main__":
         render_user_management()
     else:
         main()
+
 
 
 
