@@ -314,23 +314,32 @@ def render_user_management():
     col1, col2 = st.columns(2)
 
     with col1:
-        role_new = st.selectbox("Ruolo", ["user", "admin"], index=["user", "admin"].index(u.get("role", "user")))
+        role_new = st.selectbox(
+            "Ruolo",
+            ["user", "admin"],
+            index=["user", "admin"].index(u.get("role", "user")),
+            key=f"role_{username}"
+        )
 
-        p1 = st.checkbox("Può modificare sensibilità AI", value=permissions.get("manage_ai", False), key=f"p_ai_{username}")
-        p2 = st.checkbox("Può usare Registro IVA", value=permissions.get("use_registro_iva", True), key=f"p_registro_{username}")
-        p3 = st.checkbox("Può gestire Cliniche (aggiungi/modifica)", value=permissions.get("manage_clinics", False), key=f"p_clinic_{username}")
-        p4 = st.checkbox("Può gestire utenti", value=permissions.get("manage_users", False), key=f"p_users_{username}")
+    # Usa i permessi dell'utente che stai modificando → u["permissions"]
+        perms = u.get("permissions", {})
 
-        if st.button("💾 Salva modifiche"):
-            users[selected]["role"] = role_new
-            users[selected]["permissions"] = {
+        p1 = st.checkbox("Può modificare sensibilità AI", value=perms.get("manage_ai", False), key=f"p_ai_{username}")
+        p2 = st.checkbox("Può usare Registro IVA", value=perms.get("use_registro_iva", True), key=f"p_registro_{username}")
+        p3 = st.checkbox("Può gestire Cliniche (aggiungi/modifica)", value=perms.get("manage_clinics", False), key=f"p_clinic_{username}")
+        p4 = st.checkbox("Può gestire utenti", value=perms.get("manage_users", False), key=f"p_users_{username}")
+
+        if st.button("💾 Salva modifiche", key=f"save_{username}"):
+            users[username]["role"] = role_new
+            users[username].setdefault("permissions", {})
+            users[username]["permissions"] = {
                 "manage_ai": p1,
                 "use_registro_iva": p2,
                 "manage_clinics": p3,
                 "manage_users": p4,
             }
             save_users(users)
-            st.success("✅ Modifiche salvate.")
+            st.success(f"✅ Modifiche salvate per {username}")
             st.rerun()
 
     with col2:
@@ -1131,6 +1140,7 @@ if __name__ == "__main__":
         render_user_management()
     else:
         main()
+
 
 
 
