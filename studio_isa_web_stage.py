@@ -316,10 +316,10 @@ def render_user_management():
     with col1:
         role_new = st.selectbox("Ruolo", ["user", "admin"], index=["user", "admin"].index(u.get("role", "user")))
 
-        p1 = st.checkbox("Può modificare sensibilità AI", value=perms.get("manage_ai", False), key=f"p_ai_{username}")
-        p2 = st.checkbox("Può usare Registro IVA", value=perms.get("use_registro_iva", True), key=f"p_registro_{username}")
-        p3 = st.checkbox("Può gestire Cliniche (aggiungi/modifica)", value=perms.get("manage_clinics", False), key=f"p_clinic_{username}")
-        p4 = st.checkbox("Può gestire utenti", value=perms.get("manage_users", False), key=f"p_users_{username}")
+        p1 = st.checkbox("Può modificare sensibilità AI", value=permissions.get("manage_ai", False), key=f"p_ai_{username}")
+        p2 = st.checkbox("Può usare Registro IVA", value=permissions.get("use_registro_iva", True), key=f"p_registro_{username}")
+        p3 = st.checkbox("Può gestire Cliniche (aggiungi/modifica)", value=permissions.get("manage_clinics", False), key=f"p_clinic_{username}")
+        p4 = st.checkbox("Può gestire utenti", value=permissions.get("manage_users", False), key=f"p_users_{username}")
 
         if st.button("💾 Salva modifiche"):
             users[selected]["role"] = role_new
@@ -713,9 +713,9 @@ def render_registro_iva():
         st.session_state.pop("logged_user", None)
         st.rerun()
     user = load_users().get(logged_user, {})
-    perms = user.get("permissions", {})
+    permissions = user.get("permissions", {})
     
-    if not perms.get("use_registro_iva", False):
+    if not permissions.get("use_registro_iva", False):
         st.error("⛔ Non hai permesso di usare il Registro IVA.")
         st.stop()
     config_all = load_clinic_config()
@@ -727,7 +727,7 @@ def render_registro_iva():
 
     # ➕ Aggiunta nuova clinica
     if clinica_scelta == "+ Nuova Clinica":
-        if not perms.get("manage_clinics", False):
+        if not permissions.get("manage_clinics", False):
             st.warning("🔒 Non hai permesso di aggiungere cliniche.")
             st.stop()
         struttura = st.text_input("Nome Struttura (Nuova)")
@@ -754,7 +754,7 @@ def render_registro_iva():
 
     # ✏️ Modifica clinica esistente
     else:
-        if not perms.get("manage_clinics", False):
+        if not permissions.get("manage_clinics", False):
             st.warning("🔒 Non hai permesso di modificare questa clinica.")
             st.stop()
         cfg = config_all[clinica_scelta]
@@ -1131,6 +1131,7 @@ if __name__ == "__main__":
         render_user_management()
     else:
         main()
+
 
 
 
