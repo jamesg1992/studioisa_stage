@@ -743,6 +743,8 @@ def render_registro_iva():
 
     user = load_users().get(logged_user, {})
     permissions = user.get("permissions", {})
+    is_admin = user.get("role") == "admin"
+    user_clinics = user.get("clinics", [])
 
     # ✅ Se non può usare il Registro IVA → STOP
     if not permissions.get("use_registro_iva", False):
@@ -753,32 +755,36 @@ def render_registro_iva():
 
     config_all = load_clinic_config()
 
-    # ✅ Cliniche disponibili dipendono dai permessi
-    is_admin = user.get("role") == "admin"
-    user_clinics = user.get("clinics", [])
+    # ✅ Cliniche visibili
     if is_admin:
         cliniche_disponibili = list(config_all.keys())
     else:
         cliniche_disponibili = user_clinics
 
-    def can_edit_this_clinic(clinic_name):
-        if is_admin:
-            return true
-        return permission.get("manage_clinics", False) and clinic_name in user_clinics
-        
         if not cliniche_disponibili:
             st.warning("⚠️ Nessuna clinica assegnata. Contatta un amministratore.")
             st.stop()
 
-    # ✅ Mostra "+ Nuova Clinica" solo se può gestirle
-    choices = (["+ Nuova Clinica"] if is_admin or permissions.get("manage_clinics", False) else []) + cliniche_disponibili
+    # ✅ Funzione che determina se l'utente può modificare quella clinica
+    def can_edit_this_clinic(clinic_name):
+        if is_admin:
+            return True
+        return permissions.get("manage_clinics", False) and clinic_name in user_clinics
+
+    # ✅ "+ Nuova Clinica" mostrata solo se admin o può gestire cliniche
+    can_add_clinic = is_admin or permissions.get("manage_clinics", False)
+    choices = (["+ Nuova Clinica"] if can_add_clinic else []) + cliniche_disponibili
+
     clinica_scelta = st.selectbox("Seleziona Clinica", choices)
 
+
     # ➕ Aggiunta nuova clinica
+        # ➕ Aggiunta nuova clinica
     if clinica_scelta == "+ Nuova Clinica":
-        if not can_edit_this_clinic:
+        if not can_add_clinic:
             st.warning("🔒 Non hai permesso di aggiungere cliniche.")
-            st.stop
+            st.stop()
+
         struttura = st.text_input("Nome Struttura (Nuova)")
         via_ui = st.text_input("Via")
         cap_ui = st.text_input("CAP")
@@ -800,27 +806,22 @@ def render_registro_iva():
             save_clinic_config(config_all)
             st.success("✅ Nuova clinica aggiunta!")
             st.rerun()
-    # ✏️ Modifica clinica esistent
+
+    # ✏️ Modifica clinica esistente
     else:
         cfg = config_all[clinica_scelta]
-
-        # Admin o chi ha permesso → può modificare
         readonly = not can_edit_this_clinic(clinica_scelta)
 
-        struttura = st.text_input("Nome Struttura", cfg.get("struttura",""), disabled=readonly, key="struttura_edit")
-        via_ui = st.text_input("Via", cfg.get("via",""), disabled=readonly, key="via_edit")
-        cap_ui = st.text_input("CAP", cfg.get("cap",""), disabled=readonly, key="cap_edit")
-        citta_ui = st.text_input("Città", cfg.get("citta",""), disabled=readonly, key="citta_edit")
-        provincia_ui = st.text_input("Provincia (sigla)", max_chars=2, value=cfg.get("provincia",""), disabled=readonly, key="provincia_edit")
-        piva = st.text_input("Partita IVA", cfg.get("piva",""), disabled=readonly, key="piva_edit")
-        pagina_iniziale = st.number_input(
-            "Numero pagina iniziale", min_value=1, max_value=999,
-            value=cfg.get("pagina_iniziale_default",1),
-            disabled=readonly, key="pagina_edit"
-        )
+        struttura = st.text_input("Nome Struttura", cfg.get("struttura",""), disabled=readonly)
+        via_ui = st.text_input("Via", cfg.get("via",""), disabled=readonly)
+        cap_ui = st.text_input("CAP", cfg.get("cap",""), disabled=readonly)
+        citta_ui = st.text_input("Città", cfg.get("citta",""), disabled=readonly)
+        provincia_ui = st.text_input("Provincia (sigla)", max_chars=2, value=cfg.get("provincia",""), disabled=readonly)
+        piva = st.text_input("Partita IVA", cfg.get("piva",""), disabled=readonly)
+        pagina_iniziale = st.number_input("Numero pagina iniziale", min_value=1, max_value=999,
+                                          value=cfg.get("pagina_iniziale_default",1), disabled=readonly)
 
-        # Solo se può modificare → mostra bottone salvataggio
-        if can_edit_clinic and st.button("💾 Salva modifiche"):
+        if not readonly and st.button("💾 Salva modifiche"):
             config_all[clinica_scelta] = {
                 "struttura": struttura,
                 "via": via_ui,
@@ -1183,6 +1184,7 @@ if __name__ == "__main__":
         render_user_management()
     else:
         main()
+
 
 
 
