@@ -803,13 +803,19 @@ def render_registro_iva():
         if not can_edit_clinic:
             # ❗ Può usare la clinica ma non modificarla → NON STOP, solo read only
             cfg = config_all[clinica_scelta]
-            struttura = cfg.get("struttura","")
-            via_ui = cfg.get("via","")
-            cap_ui = cfg.get("cap","")
-            citta_ui = cfg.get("citta","")
-            provincia_ui = cfg.get("provincia","")
-            piva = cfg.get("piva","")
-            pagina_iniziale = cfg.get("pagina_iniziale_default",1)
+            readonly = not can_edit_clinic
+            struttura = st.text_input("Nome Struttura", cfg.get("struttura",""), disabled=readonly)
+            via_ui = st.text_input("Via", cfg.get("via",""), disabled=readonly)
+            cap_ui = st.text_input("CAP", cfg.get("cap",""), disabled=readonly)
+            citta_ui = st.text_input("Città", cfg.get("citta",""), disabled=readonly)
+            provincia_ui = st.text_input("Provincia (sigla)", max_chars=2, value=cfg.get("provincia",""), disabled=readonly)
+            piva = st.text_input("Partita IVA", cfg.get("piva",""), disabled=readonly)
+            pagina_iniziale = st.number_input(
+                "Numero pagina iniziale",
+                min_value=1, max_value=999,
+                value=cfg.get("pagina_iniziale_default",1),
+                disabled=readonly
+            )
         else:    
             cfg = config_all[clinica_scelta]
 
@@ -821,7 +827,7 @@ def render_registro_iva():
         piva = st.text_input("Partita IVA", cfg.get("piva",""))
         pagina_iniziale = st.number_input("Numero pagina iniziale", min_value=1, max_value=999,
                                           value=cfg.get("pagina_iniziale_default",1))
-
+    if can_edit_clinic:
         if st.button("💾 Salva modifiche"):
             config_all[clinica_scelta] = {
                 "struttura": struttura,
@@ -1185,6 +1191,7 @@ if __name__ == "__main__":
         render_user_management()
     else:
         main()
+
 
 
 
