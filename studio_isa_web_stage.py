@@ -740,37 +740,42 @@ def render_registro_iva():
     if st.sidebar.button("🔓 Logout"):
         st.session_state.pop("logged_user", None)
         st.rerun()
+
     user = load_users().get(logged_user, {})
     permissions = user.get("permissions", {})
-    
+
+    # ✅ Se non può usare il Registro IVA → STOP
     if not permissions.get("use_registro_iva", False):
         st.error("⛔ Non hai permesso di usare il Registro IVA.")
         st.stop()
-    config_all = load_clinic_config()
-    # --- Determina elenco cliniche disponibili per questo utente ---
-    if user.get("role") == "admin":
-        # Admin vede tutte
-        cliniche = list(config_all.keys())
-        can_edit_clinic = True
-    else:
-        cliniche = user.get("clinics", [])
-        can_edit_clinic = permissions.get("manage_clinics", False)
-
-        if not cliniche:
-            st.warning("⚠️ Nessuna clinica assegnata a questo utente. Contatta un amministratore.")
-            st.stop()
 
     st.header("📄 Registro IVA")
 
-    # Se può gestire cliniche → mostra "+ Nuova Clinica"
-    scelte = (["+ Nuova Clinica"] if can_edit_clinic else []) + cliniche
-    clinica_scelta = st.selectbox("Seleziona Clinica", scelte)
+    config_all = load_clinic_config()
+
+    # ✅ Cliniche disponibili dipendono dai permessi
+    if permissions.get("manage_clinics", False) or user.get("role") == "admin":
+        # può vedere e gestire tutte
+        cliniche_disponibili = list(config_all.keys())
+        can_edit_clinic = True
+    else:
+        # può solo usare quelle assegnate
+        cliniche_disponibili = user.get("clinics", [])
+        can_edit_clinic = False
+
+        if not cliniche_disponibili:
+            st.warning("⚠️ Nessuna clinica assegnata. Contatta un amministratore.")
+            st.stop()
+
+    # ✅ Mostra "+ Nuova Clinica" solo se può gestirle
+    choices = (["+ Nuova Clinica"] if can_edit_clinic else []) + cliniche_disponibili
+    clinica_scelta = st.selectbox("Seleziona Clinica", choices)
 
     # ➕ Aggiunta nuova clinica
     if clinica_scelta == "+ Nuova Clinica":
-        if not permissions.get("manage_clinics", False):
+        if not can_edit_clinic:
             st.warning("🔒 Non hai permesso di aggiungere cliniche.")
-            st.stop()
+            st.stop
         struttura = st.text_input("Nome Struttura (Nuova)")
         via_ui = st.text_input("Via")
         cap_ui = st.text_input("CAP")
@@ -795,9 +800,17 @@ def render_registro_iva():
 
     # ✏️ Modifica clinica esistente
     else:
-        if not permissions.get("manage_clinics", False):
-            st.warning("🔒 Non hai permesso di modificare questa clinica.")
-            st.stop()
+        if not can_edit_clinic:
+        # ❗ Può usare la clinica ma non modificarla → NON STOP, solo read only
+        cfg = config_all[clinica_scelta]
+        struttura = cfg.get("struttura","")
+        via_ui = cfg.get("via","")
+        cap_ui = cfg.get("cap","")
+        citta_ui = cfg.get("citta","")
+        provincia_ui = cfg.get("provincia","")
+        piva = cfg.get("piva","")
+        pagina_iniziale = cfg.get("pagina_iniziale_default",1)
+        
         cfg = config_all[clinica_scelta]
 
         struttura = st.text_input("Nome Struttura", cfg.get("struttura",""))
@@ -1172,6 +1185,7 @@ if __name__ == "__main__":
         render_user_management()
     else:
         main()
+
 
 
 
