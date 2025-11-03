@@ -85,6 +85,7 @@ def load_users():
         if "permissions" not in v:
             v["permissions"] = {
                 "manage_ai": False,
+                "use_registro_iva": True,
                 "manage_clinics": False,
                 "manage_users": False,
             }
@@ -315,16 +316,18 @@ def render_user_management():
     with col1:
         role_new = st.selectbox("Ruolo", ["user", "admin"], index=["user", "admin"].index(u.get("role", "user")))
 
-        p1 = st.checkbox("Può modificare sensibilità AI", value=u.get("permissions", {}).get("manage_ai", False))
-        p2 = st.checkbox("Può gestire Cliniche", value=u.get("permissions", {}).get("manage_clinics", False))
-        p3 = st.checkbox("Può gestire Utenti", value=u.get("permissions", {}).get("manage_users", False))
+        p1 = st.checkbox("Può modificare sensibilità AI", value=perms.get("manage_ai", False), key=f"p_ai_{username}")
+        p2 = st.checkbox("Può usare Registro IVA", value=perms.get("use_registro_iva", True), key=f"p_registro_{username}")
+        p3 = st.checkbox("Può gestire Cliniche (aggiungi/modifica)", value=perms.get("manage_clinics", False), key=f"p_clinic_{username}")
+        p4 = st.checkbox("Può gestire utenti", value=perms.get("manage_users", False), key=f"p_users_{username}")
 
         if st.button("💾 Salva modifiche"):
             users[selected]["role"] = role_new
             users[selected]["permissions"] = {
                 "manage_ai": p1,
-                "manage_clinics": p2,
-                "manage_users": p3,
+                "use_registro_iva": p2,
+                "manage_clinics": p3,
+                "manage_users": p4,
             }
             save_users(users)
             st.success("✅ Modifiche salvate.")
@@ -409,15 +412,6 @@ def main():
 
     st.title("📊 Studio ISA – DrVeto e VetsGo")
 
-    config_all = load_clinic_config()
-    cliniche = list(config_all.keys())
-
-    if not cliniche:
-        st.error("⚠️ Nessuna clinica configurata. Vai in Registro IVA → aggiungi clinica.")
-        st.stop()
-
-    clinica_scelta = st.selectbox("Seleziona Clinica", cliniche)
-    
     file = st.file_uploader("Seleziona Excel", type=["xlsx","xls"])
     if not file:
         st.stop()
@@ -434,7 +428,6 @@ def main():
         st.session_state.auto_added = []  # [(term, cat, conf)]
 
     df = st.session_state.df.copy()
-    df["Clinica"] = clinica_scelta
     mem = st.session_state.mem
     new = st.session_state.new
     mode = st.session_state.mode
@@ -632,17 +625,6 @@ def main():
 
     st.download_button("⬇️ Scarica Excel", data=out.getvalue(), file_name="StudioISA.xlsx")
 
-    if st.checkbox("📍 Confronta questa clinica con tutte le altre"):
-        if "report_storico" not in st.session_state:
-            st.session_state.report_storico = pd.DataFrame()
-        st.session_state.report_storico = pd.concat([st.session_state.report_storico, studio.assign(Clinica=clinica_scelta)])
-        st.subheader("Confronto tra Cliniche")
-        confronto = st.session_state.report_storico.pivot_table(
-            index="Categoria", columns="Clinica", values=ycol, aggfunc="sum"
-        ).fillna(0)
-        st.dataframe(confronto, use_container_width=True)
-        st.bar_chart(confronto.T)
-
     # ===== DASHBOARD =====
     if page == "Dashboard Annuale":
         st.header("📈 Dashboard Andamento Annuale")
@@ -731,18 +713,23 @@ def render_registro_iva():
         st.session_state.pop("logged_user", None)
         st.rerun()
     user = load_users().get(logged_user, {})
+    perms = user.get("permissions", {})
+    
+    if not perms.get("use_registro_iva", False):
+        st.error("⛔ Non hai permesso di usare il Registro IVA.")
+        st.stop()
     config_all = load_clinic_config()
     cliniche = list(config_all.keys())
-    if not user.get("permissions", {}).get("manage_clinics", False):
-        st.info("🔒 Non hai permesso per modificare l’anagrafica cliniche.")
-        clinica_scelta = st.selectbox("Seleziona Clinica", cliniche)
-        return
+
     st.header("📄 Registro IVA")
     
     clinica_scelta = st.selectbox("Seleziona Clinica", ["+ Nuova Clinica"] + cliniche)
 
     # ➕ Aggiunta nuova clinica
     if clinica_scelta == "+ Nuova Clinica":
+        if not perms.get("manage_clinics", False):
+            st.warning("🔒 Non hai permesso di aggiungere cliniche.")
+            st.stop()
         struttura = st.text_input("Nome Struttura (Nuova)")
         via_ui = st.text_input("Via")
         cap_ui = st.text_input("CAP")
@@ -767,6 +754,9 @@ def render_registro_iva():
 
     # ✏️ Modifica clinica esistente
     else:
+        if not perms.get("manage_clinics", False):
+            st.warning("🔒 Non hai permesso di modificare questa clinica.")
+            st.stop()
         cfg = config_all[clinica_scelta]
 
         struttura = st.text_input("Nome Struttura", cfg.get("struttura",""))
@@ -1141,6 +1131,7 @@ if __name__ == "__main__":
         render_user_management()
     else:
         main()
+
 
 
 
