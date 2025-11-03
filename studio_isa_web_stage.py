@@ -799,8 +799,8 @@ def render_registro_iva():
             st.rerun()
 
     # ✏️ Modifica clinica esistente
-        else:
-            if not can_edit_clinic:
+    else:
+        if not can_edit_clinic:
             # ❗ Può usare la clinica ma non modificarla → NON STOP, solo read only
             cfg = config_all[clinica_scelta]
             struttura = cfg.get("struttura","")
@@ -810,8 +810,8 @@ def render_registro_iva():
             provincia_ui = cfg.get("provincia","")
             piva = cfg.get("piva","")
             pagina_iniziale = cfg.get("pagina_iniziale_default",1)
-        
-        cfg = config_all[clinica_scelta]
+        else:    
+            cfg = config_all[clinica_scelta]
 
         struttura = st.text_input("Nome Struttura", cfg.get("struttura",""))
         via_ui = st.text_input("Via", cfg.get("via",""))
@@ -1185,6 +1185,7 @@ if __name__ == "__main__":
         render_user_management()
     else:
         main()
+
 
 
 
