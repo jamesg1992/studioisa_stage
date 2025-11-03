@@ -754,21 +754,24 @@ def render_registro_iva():
     config_all = load_clinic_config()
 
     # ✅ Cliniche disponibili dipendono dai permessi
-    if permissions.get("manage_clinics", False) or user.get("role") == "admin":
-        # può vedere e gestire tutte
+    is_admin = user.get("role") == "admin"
+    user_clinics = user.get("clinics", [])
+    if is_admin:
         cliniche_disponibili = list(config_all.keys())
-        can_edit_clinic = True
     else:
-        # può solo usare quelle assegnate
-        cliniche_disponibili = user.get("clinics", [])
-        can_edit_clinic = False
+        cliniche_disponibili = user_clinics
 
+    def can_edit_this_clinic(clinic_name):
+        if is_admin:
+            return true
+        return permission.get("manage_clinics", False) and clinic_name in user_clinics
+        
         if not cliniche_disponibili:
             st.warning("⚠️ Nessuna clinica assegnata. Contatta un amministratore.")
             st.stop()
 
     # ✅ Mostra "+ Nuova Clinica" solo se può gestirle
-    choices = (["+ Nuova Clinica"] if can_edit_clinic else []) + cliniche_disponibili
+    choices = (["+ Nuova Clinica"] if is_admin or permissions.get("manage_clinics", False) else []) + cliniche_disponibili
     clinica_scelta = st.selectbox("Seleziona Clinica", choices)
 
     # ➕ Aggiunta nuova clinica
@@ -802,7 +805,7 @@ def render_registro_iva():
         cfg = config_all[clinica_scelta]
 
         # Admin o chi ha permesso → può modificare
-        readonly = not can_edit_clinic
+        readonly = not can_edit_this_clinic(clinica_scelta)
 
         struttura = st.text_input("Nome Struttura", cfg.get("struttura",""), disabled=readonly, key="struttura_edit")
         via_ui = st.text_input("Via", cfg.get("via",""), disabled=readonly, key="via_edit")
@@ -1180,6 +1183,7 @@ if __name__ == "__main__":
         render_user_management()
     else:
         main()
+
 
 
 
