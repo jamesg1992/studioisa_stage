@@ -279,7 +279,7 @@ def classify_B(prest, mem):
     return "Altre attività"
 
 def render_dictionary_editor():
-    st.title("📚 Gestione Dizionario AI")
+    st.title("📚 Gestione Dizionario")
 
     mode = st.session_state.get("mode", "A")
     filename = GITHUB_FILE_A if mode=="A" else GITHUB_FILE_B
@@ -291,13 +291,13 @@ def render_dictionary_editor():
         return
 
     st.subheader("🔍 Cerca termine")
-    query = st.text_input("Filtro", placeholder="es. eco, chirurgia, vaccino...").lower()
+    query = st.text_input("Filtro", placeholder="es. eco, chirurgia, vaccino...", key="dict_search").strip().lower()
 
     filtered = {k:v for k,v in data.items() if query in k.lower()}
 
     st.write(f"Termini trovati: **{len(filtered)}**")
 
-    for term, cat in sorted(filtered.items()):
+    for term, cat in sorted(filtered.items(), key=lambda x: (x[1], x[0])):
         col1, col2, col3 = st.columns([3,2,1])
         col1.write(f"**{term}**")
         new_cat = col2.selectbox("Categoria", list(RULES_A.keys() if mode=="A" else RULES_B.keys()),
@@ -346,7 +346,7 @@ def render_user_management():
         {
             "Username": u,
             "Ruolo": d.get("role", "user"),
-            "Gestione AI": "✅" if d.get("permissions", {}).get("manage_ai", False) else "❌",
+            "Gestione AI e Dizionario": "✅" if d.get("permissions", {}).get("manage_ai", False) else "❌",
             "Gestione Cliniche (aggiungi/rimuovi)": "✅" if d.get("permissions", {}).get("manage_clinics", False) else "❌",
             "Può usare Registro IVA": "✅" if d.get("permissions", {}).get("use_registro_iva", False) else "❌",
             "Gestione Utenti": "✅" if d.get("permissions", {}).get("manage_users", False) else "❌",
@@ -375,7 +375,7 @@ def render_user_management():
         # --- PERMESSI DI BASE ---
         perms = u.get("permissions", {})
 
-        p1 = st.checkbox("Può modificare sensibilità AI", value=perms.get("manage_ai", False), key=f"p_ai_{selected}")
+        p1 = st.checkbox("Può modificare AI e Dizionario", value=perms.get("manage_ai", False), key=f"p_ai_{selected}")
         p2 = st.checkbox("Può usare Registro IVA", value=perms.get("use_registro_iva", True), key=f"p_registro_{selected}")
         p3 = st.checkbox("Può gestire Cliniche (aggiungi/modifica)", value=perms.get("manage_clinics", False), key=f"p_clinic_{selected}")
         p4 = st.checkbox("Può gestire utenti", value=perms.get("manage_users", False), key=f"p_users_{selected}")
@@ -1235,3 +1235,4 @@ if __name__ == "__main__":
         render_user_management()
     else:
         main()
+
