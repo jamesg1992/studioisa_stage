@@ -340,7 +340,7 @@ def render_user_management():
         cliniche_nuove = set()
 
         for c in cliniche_disponibili:
-            checked = st.checkbox(c, value=(c in cliniche_utente), key=f"clinic_{username}_{c}")
+            checked = st.checkbox(c, value=(c in cliniche_utente), key=f"clinic_{selected}_{c}")
             if checked:
                 cliniche_nuove.add(c)
 
@@ -1197,6 +1197,7 @@ if __name__ == "__main__":
         render_user_management()
     else:
         main()
+
 
 
 
