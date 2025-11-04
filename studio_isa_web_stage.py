@@ -815,7 +815,7 @@ def render_registro_iva():
         provincia_ui = st.text_input("Provincia (sigla)", max_chars=2, value=cfg.get("provincia",""), disabled=readonly)
         piva = st.text_input("Partita IVA", cfg.get("piva",""), disabled=readonly)
         pagina_iniziale = st.number_input("Numero pagina iniziale", min_value=1, max_value=999,
-                                          value=cfg.get("pagina_iniziale_default",1), disabled=readonly)
+                                          value=cfg.get("pagina_iniziale_default",1))
 
         if not readonly and st.button("💾 Salva modifiche"):
             config_all[clinica_scelta] = {
@@ -1180,6 +1180,7 @@ if __name__ == "__main__":
         render_user_management()
     else:
         main()
+
 
 
 
