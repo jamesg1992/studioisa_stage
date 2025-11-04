@@ -324,24 +324,37 @@ def render_user_management():
             key=f"role_{selected}"
         )
 
+        # --- PERMESSI DI BASE ---
         perms = u.get("permissions", {})
 
-        p1 = st.checkbox("Può modificare sensibilità AI", value=perms.get("manage_ai", False), key=f"p_ai_{selected}")
-        p2 = st.checkbox("Può usare Registro IVA", value=perms.get("use_registro_iva", True), key=f"p_registro_{selected}")
-        p3 = st.checkbox("Può gestire Cliniche (aggiungi/modifica)", value=perms.get("manage_clinics", False), key=f"p_clinic_{selected}")
-        p4 = st.checkbox("Può gestire utenti", value=perms.get("manage_users", False), key=f"p_users_{selected}")
+        p1 = st.checkbox("Può modificare sensibilità AI", value=perms.get("manage_ai", False), key=f"p_ai_{username}")
+        p2 = st.checkbox("Può usare Registro IVA", value=perms.get("use_registro_iva", True), key=f"p_registro_{username}")
+        p3 = st.checkbox("Può gestire Cliniche (aggiungi/modifica)", value=perms.get("manage_clinics", False), key=f"p_clinic_{username}")
+        p4 = st.checkbox("Può gestire utenti", value=perms.get("manage_users", False), key=f"p_users_{username}")
 
-        if st.button("💾 Salva modifiche", key=f"save_{selected}"):
-            users[selected]["role"] = role_new
-            users[selected].setdefault("permissions", {})
-            users[selected]["permissions"] = {
+        st.markdown("### 🏥 Cliniche assegnate a questo utente:")
+
+        config_all = load_clinic_config()
+        cliniche_disponibili = list(config_all.keys())
+        cliniche_utente = set(u.get("clinics", []))
+        cliniche_nuove = set()
+
+        for c in cliniche_disponibili:
+            checked = st.checkbox(c, value=(c in cliniche_utente), key=f"clinic_{username}_{c}")
+            if checked:
+                cliniche_nuove.add(c)
+
+        if st.button("💾 Salva modifiche", key=f"save_all_{username}"):
+            users[username]["role"] = role_new
+            users[username]["permissions"] = {
                 "manage_ai": p1,
                 "use_registro_iva": p2,
                 "manage_clinics": p3,
                 "manage_users": p4,
             }
+            users[username]["clinics"] = sorted(list(cliniche_nuove))
             save_users(users)
-            st.success(f"✅ Modifiche salvate per {selected}")
+            st.success("✅ Permessi e cliniche aggiornate.")
             st.rerun()
 
         st.markdown("#### Cliniche assegnate")
@@ -1184,6 +1197,7 @@ if __name__ == "__main__":
         render_user_management()
     else:
         main()
+
 
 
 
