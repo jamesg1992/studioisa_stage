@@ -278,6 +278,54 @@ def classify_B(prest, mem):
 
     return "Altre attività"
 
+def render_dictionary_editor():
+    st.title("📚 Gestione Dizionario AI")
+
+    mode = st.session_state.get("mode", "A")
+    filename = GITHUB_FILE_A if mode=="A" else GITHUB_FILE_B
+
+    data = github_load_json(filename)
+
+    if not data:
+        st.info("⚠️ Il dizionario è vuoto.")
+        return
+
+    st.subheader("🔍 Cerca termine")
+    query = st.text_input("Filtro", placeholder="es. eco, chirurgia, vaccino...").lower()
+
+    filtered = {k:v for k,v in data.items() if query in k.lower()}
+
+    st.write(f"Termini trovati: **{len(filtered)}**")
+
+    for term, cat in sorted(filtered.items()):
+        col1, col2, col3 = st.columns([3,2,1])
+        col1.write(f"**{term}**")
+        new_cat = col2.selectbox("Categoria", list(RULES_A.keys() if mode=="A" else RULES_B.keys()),
+                                index=(list(RULES_A.keys() if mode=="A" else RULES_B.keys())).index(cat),
+                                key=f"cat_{term}")
+        if col2.button("💾", key=f"save_{term}"):
+            data[term] = new_cat
+            github_save_json(filename, data)
+            st.success(f"✅ Aggiornato '{term}'")
+            st.rerun()
+
+        if col3.button("🗑️", key=f"del_{term}"):
+            data.pop(term, None)
+            github_save_json(filename, data)
+            st.warning(f"🗑️ Rimosso '{term}'")
+            st.rerun()
+
+    st.divider()
+
+    st.subheader("➕ Aggiungi nuovo termine")
+    new_term = st.text_input("Termine nuovo")
+    new_cat = st.selectbox("Categoria nuova", list(RULES_A.keys() if mode=="A" else RULES_B.keys()))
+    if st.button("➕ Aggiungi"):
+        data[new_term.lower().strip()] = new_cat
+        github_save_json(filename, data)
+        st.success("✅ Aggiunto")
+        st.rerun()
+
 def render_user_management():
     st.title("👤 Gestione Utenti")
 
@@ -399,6 +447,9 @@ pages = ["📊 Studio ISA", "📄 Registro IVA"]
 user_data = load_users().get(logged_user,{})
 permissions = user_data.get("permissions", {})
 
+if user_data.get("role") == "admin" or permissions.get("manage_ai", False):
+    pages.append("📚 Gestione Dizionario")
+
 if user_data.get("role") == "admin" or permissions.get("manage_users", False):
     pages.append("👤 Gestione Utenti")
 page = st.sidebar.radio("📌 Navigazione", pages)
@@ -420,14 +471,17 @@ if not can_manage_ai:
     st.sidebar.caption("🔒 Non hai il permesso di modificare la sensibilità AI")
 else:
     st.sidebar.caption("✅ Puoi modificare la sensibilità AI")
-st.sidebar.caption("Se la confidenza del modello ≥ soglia, il termine viene appreso in automatico.")
-st.sidebar.caption("Alcyon Italia SpA - 2025")
-st.sidebar.caption("v.1.1)
+    st.sidebar.caption("Se la confidenza del modello ≥ soglia, il termine viene appreso in automatico.")
+    st.sidebar.caption("Alcyon Italia SpA - 2025 - v.1.1")
 
 # =============== MAIN =================
 def main():
     if page == "👤 Gestione Utenti":
         render_user_management()
+        st.stop()
+
+    if page == "📚 Gestione Dizionario":
+        render_dictionary_editor()
         st.stop()
     
     if st.sidebar.button("🔓 Logout"):
@@ -1181,69 +1235,3 @@ if __name__ == "__main__":
         render_user_management()
     else:
         main()
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
