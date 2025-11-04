@@ -344,7 +344,7 @@ def render_user_management():
             if checked:
                 cliniche_nuove.add(c)
 
-        if st.button("💾 Salva modifiche", key=f"save_all_{username}"):
+        if st.button("💾 Salva modifiche", key=f"save_all_{selected}"):
             users[username]["role"] = role_new
             users[username]["permissions"] = {
                 "manage_ai": p1,
@@ -1197,6 +1197,7 @@ if __name__ == "__main__":
         render_user_management()
     else:
         main()
+
 
 
 
