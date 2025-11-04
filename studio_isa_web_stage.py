@@ -352,7 +352,7 @@ def render_user_management():
                 "manage_clinics": p3,
                 "manage_users": p4,
             }
-            users[username]["clinics"] = sorted(list(cliniche_nuove))
+            users[selected]["clinics"] = sorted(list(cliniche_nuove))
             save_users(users)
             st.success("✅ Permessi e cliniche aggiornate.")
             st.rerun()
@@ -1180,6 +1180,7 @@ if __name__ == "__main__":
         render_user_management()
     else:
         main()
+
 
 
 
