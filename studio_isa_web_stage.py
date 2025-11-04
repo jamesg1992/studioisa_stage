@@ -327,11 +327,11 @@ def render_user_management():
         # --- PERMESSI DI BASE ---
         perms = u.get("permissions", {})
 
-        p1 = st.checkbox("Può modificare sensibilità AI", value=perms.get("manage_ai", False), key=f"p_ai_{username}")
-        p2 = st.checkbox("Può usare Registro IVA", value=perms.get("use_registro_iva", True), key=f"p_registro_{username}")
-        p3 = st.checkbox("Può gestire Cliniche (aggiungi/modifica)", value=perms.get("manage_clinics", False), key=f"p_clinic_{username}")
-        p4 = st.checkbox("Può gestire utenti", value=perms.get("manage_users", False), key=f"p_users_{username}")
-
+        p1 = st.checkbox("Può modificare sensibilità AI", value=perms.get("manage_ai", False), key=f"p_ai_{selected}")
+        p2 = st.checkbox("Può usare Registro IVA", value=perms.get("use_registro_iva", True), key=f"p_registro_{selected}")
+        p3 = st.checkbox("Può gestire Cliniche (aggiungi/modifica)", value=perms.get("manage_clinics", False), key=f"p_clinic_{selected}")
+        p4 = st.checkbox("Può gestire utenti", value=perms.get("manage_users", False), key=f"p_users_{selected}")
+        
         st.markdown("### 🏥 Cliniche assegnate a questo utente:")
 
         config_all = load_clinic_config()
@@ -1197,6 +1197,7 @@ if __name__ == "__main__":
         render_user_management()
     else:
         main()
+
 
 
 
