@@ -357,23 +357,6 @@ def render_user_management():
             st.success("✅ Permessi e cliniche aggiornate.")
             st.rerun()
 
-        st.markdown("#### Cliniche assegnate")
-
-        clinics_all = list(load_clinic_config().keys())
-        assigned = u.get("clinics", [])
-
-        selected_clinics = st.multiselect(
-            "Cliniche utilizzabili da questo utente:",
-            clinics_all,
-            default=assigned,
-            key=f"clinics_{selected}"
-        )
-        if st.button("💾 Salva Cliniche", key=f"save_clinics_{selected}"):
-            users[selected]["clinics"] = selected_clinics
-            save_users(users)
-            st.success("✅ Cliniche aggiornate")
-            st.rerun()
-
     with col2:
         new_pwd = st.text_input("Nuova password", type="password", placeholder="Lascia vuoto per non cambiare")
         if st.button("🔑 Reset Password"):
@@ -1197,6 +1180,7 @@ if __name__ == "__main__":
         render_user_management()
     else:
         main()
+
 
 
 
